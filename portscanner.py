@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import optparse
 import socket
-import nmap3
-import os
-from scapy.all import *
+import nmap
 
 def port_scan(target_host, target_ports, protocol):
     target_ip = socket.gethostbyname(target_host)
@@ -27,57 +25,26 @@ def port_scan(target_host, target_ports, protocol):
 
 def tcp_scan(target_host, target_port):
     try:
-        # create a socket called sock
         sock = socket.socket()
-        # use the user input target host and port
         sock.connect((target_host, target_port))
 
         print('TCP connection established at port %d' % target_port)
         sock.close()
     except Exception as e:
-        # print (e)
+        print (e)
         print('[Error] No TCP connection established')
 
         
-def udp_scan(dst_ip,dst_port):
-    udp_scan_resp = sr1(IP(dst=dst_ip)/UDP(dport=dst_port),timeout=10)
-    if (str(type(udp_scan_resp))=="<type 'NoneType'>"):
-        retrans = []
-        for count in range(0,3):
-            retrans.append(sr1(IP(dst=dst_ip)/UDP(dport=dst_port),timeout=dst_timeout))
-        for item in retrans:
-            if (str(type(item))!="<type 'NoneType'>"):
-                udp_scan(dst_ip,dst_port,10)
-        return "Open|Filtered"
-    elif (udp_scan_resp.haslayer(UDP)):
-        return "Open"
-    elif(udp_scan_resp.haslayer(ICMP)):
-        if(int(udp_scan_resp.getlayer(ICMP).type)==3 and int(udp_scan_resp.getlayer(ICMP).code)==3):
-            return "Closed"
-        elif(int(udp_scan_resp.getlayer(ICMP).type)==3 and int(udp_scan_resp.getlayer(ICMP).code) in [1,2,9,10,13]):
-            return "Filtered"
-    else:
-        return "CHECK"
-
-# def udp_scan(target_host, target_port):
-#     try:
-
-#         res = os.system("nc -vnzu "+target_host+target_port+" > /dev/null 2>&1")
-#         if res == 0:
-#             print("port alive")
-#         else:
-#             print("port dead")
-#         # udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         # udp_sock.sendto(b'PING', (target_host,target_port))
-#         # data, addr = udp_sock.recvfrom(1024)
-
-#         # print('UDP connection established at port %d' % target_port)
-#         # print(data,addr)
-#         #udp_sock.close()
-#     except Exception as e:
-#         print (e)
-#         print('[Error] No UDP connection established')
-
+def udp_scan(target, port):
+    nm = nmap.PortScanner()
+    try:
+        nm.scan(hosts=target, ports=str(port), arguments='-Pn -sU ', sudo=True)
+        print(nm['scan'][target])
+        print("\n Port State:")
+        print(nm['udp'][port]['state'])
+    except Exception as err:
+        print(err)
+        return None 
     
 
 def main():
